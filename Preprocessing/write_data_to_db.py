@@ -4,6 +4,12 @@
 Created on Sat Apr 18 15:32:31 2020
 
 @author: kewilliams
+
+create/modify table containing acronym, phrase, count, and meshID
+database name is findphrasedb
+
+usage:
+    write_data_to_db.py username password inputFile [newTable]
 """
 
 import mysql.connector
@@ -13,9 +19,12 @@ import argparse
 
 
 def createNewTable(cursor):
-    cursor.execute('drop table findPhrase')
+    try:
+        cursor.execute('drop table findPhrase')
+    except:
+        print('Table does not exist')
     cursor.execute('create table findPhrase (acronym varchar(20), phrase \
-                    varchar(100),count mediumint,meshID varchar(10), unique \
+                    varchar(100),count mediumint,meshID varchar(15), unique \
                         (acronym, phrase, meshID))') 
 
 def executeQuery(cursor, data, duplicateList):
@@ -28,7 +37,7 @@ def executeQuery(cursor, data, duplicateList):
     try:
         cursor.execute(query)
     except mysql.connector.Error as err:
-        if err.errno == 1062: #duplicate entry code
+        if err.errno == 1062: #violation of unique constraint
             duplicateList.append(info)
         else:
             print(data[0])
@@ -72,7 +81,7 @@ ap = argparse.ArgumentParser(description='Add data to database')
 ap.add_argument("username", help="findphrasedb username")
 ap.add_argument("password", help="findphrasedb password")
 ap.add_argument("inFile", help = "directory of input files")
-ap.add_argument("newTable", nargs='?', help = "drop and create new table", default = False)
+ap.add_argument("newTable", nargs='?', type = bool, help = "drop and create new table", default = False)
 
 # print help if no arguments are provided
 if len(sys.argv)==1:
@@ -86,7 +95,6 @@ password = args['password']
 inFile = args['inFile']
 newTable = args['newTable']
 
-# inFile = '/home/kewilliams/Documents/Word_Embedding/updated_acronym_phrase_mesh.txt'
-
 duplicates = accessDatabase(userName, password, inFile, newTable)
 print(str(len(duplicates)) + ' duplicate records not written to DB')
+print(duplicates)

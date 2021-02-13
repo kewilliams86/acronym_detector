@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name ="theme-color" content="#20558a" />
+</head>
+<body>
+    <div id="login">
+        <label id="lbl" for="name"> Search: </label>
+        <input id="id_term" type="text" placeholder="search" />
+        <button id="btn" onclick="runCode();">Search</button>
+    </div>
+
+    <script>
+        function runCode() {
+            var searchTerm;
+            var results = [];
+
+            search();
+
+            function search() {
+                searchTerm = document.getElementById("id_term").value.toUpperCase();
+
+                searchTermList = searchTerm.replace(/[/()'"]/g, '').split(' ');
+
+                //updateSearchTerm = searchTerm.replace(/[/()'"]/g, ''); // swap ' " ( ) with whitespace ?? not sure if good idea
+                //console.log(updateSearchTerm)
+                //searchTermList = updateSearchTerm.split(' '); // split terms into list
+                console.log(searchTermList)
+
+                // searchTermList = searchTerm.split(' '); // without regex
+                waiting = searchTermList.length; // get number of words
+                //console.log(searchTermList);
+                //loop through all words, find matches and execute finish 
+                searchTermList.forEach(function (term) {
+                    searchFunction(term, generateDialogBox);
+                })
+            }
+
+            function searchFunction(term, callback) {
+
+                console.log(term);
+                var xhttp = new XMLHttpRequest();
+
+                xhttp.onload = function () {
+
+                    // only performing code if request succeeds
+                    // if valid acronym, www.path.to/json/ACRONYM will exist
+                    try {
+                        if (this.readyState == 4 && this.status == 200) {
+                            query = JSON.parse(this.responseText);
+                            // list comprehension (kind of) to get iterable list of dictionaries
+                            phraseList = query.map(function (element) { return element });
+                            console.table(phraseList)
+                            results.push(phraseList);
+                            console.table(results)
+                        }
+                    } catch (err) {
+                        console.log(term + ' not found');
+                    } finally {
+                        callback();
+                    }
+                }
+
+                //xhttp.open("GET", 'https://my-json-server.typicode.com/kewilliams86/demo/' + term, true);
+                xhttp.open("GET", 'https://bioinformatics.easternct.edu/BCBET2/findphrase.php?q=' + term, true);
+                xhttp.send();
+            }
+
+            function generateDialogBox() {
+                waiting--; // wait for all pages to load
+                if (waiting == 0) {
+
+                    //console.log(results)
+                    if (results.length > 0) { // if any matches found
+
+                        /*
+                        dialogData = '<dialog>The following phrase(s) are linked to your search:<br>'
+                        dialogData += 'Potential acronym for ' + searchTerm + ':<ul>';
+            
+                        //console.log(results);
+                        for (let r of results) { // create links for all associated phrases
+                            //console.log(r);
+                            //searchString = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + r.phrase + '[MeSH Terms] ' + searchTerm;
+                            searchString = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + r.phrase.toUpperCase() + '[MeSH Terms] ' + searchTerm.replace(r.term, '');
+                            dialogData += '<li><a href = "' + searchString + '">' + r.phrase + '</a></li>';
+                            //dialogData += '<li><a href = "' + searchString + '">' + r.phrase + '</a> ' + r.meshID + '</li>'; // random testing thing
+                        }
+                        */
+
+                        dialogData = '<dialog id = "dialogAcronymExt"> The following potential acronyms were detected: <br><ol>'
+
+                             
+                            let optionCnt = 0;
+                            let acronymCnt = 0;
+
+                        for (let t of results) {
+                            t = t.sort(function (a, b) {
+                                return b.count - a.count;
+                            })
+                            dialogData += '<li id="' + acronymCnt + '">' + t[0].acronym.toUpperCase() + '</li>';
+                            dialogData += '<div class="modal-body"><select id="acronym' + acronymCnt + '">'
+                            dialogData += '<option value="phrase' + optionCnt + '"></option > ';
+                            for (let r of t) {   
+                                optionCnt++;
+                                dialogData += '<option value="phrase' + optionCnt + '" name="' + r.acronym + '">';
+                                dialogData += r.phrase.toUpperCase() + ' (' + r.count + ')</option>';
+                                
+                            }
+                            dialogData += '</select>';
+                            acronymCnt++;
+                        }
+
+                        console.table(results);
+
+                        dialogData += '</ol>Click phrase to improve search results<br><br>';
+                        
+                        dialogData += '<button id = "dialogSearch" style = "float: left;">Search</button>'
+                        dialogData += '<label id = "notFound" style = "color: red; padding-left: 10px;"></label>';
+                        dialogData += '<button id = "dialogClose" style = "float: right;">Close</button></dialog> ';
+
+                        document.body.innerHTML += dialogData;
+
+                        let dialog = document.getElementById("dialogAcronymExt");
+
+                        dialog.querySelector("button[id = 'dialogSearch']").addEventListener("click", function () {
+                            var phraseSelected = false
+                            for (i = 0; i < acronymCnt; i++) {
+                                let input = document.getElementById("acronym" + i);
+                                input = input.options[input.selectedIndex];
+                                acronym = input.getAttribute('name');
+                                console.log(acronym);
+                                if (acronym != null) {
+                                    phraseSelected = true
+                                    phrase = input.text.split(' ');
+                                    console.log(phrase)
+                                    //phrase = phrase.split(' ');
+                                    phrase = phrase.slice(0, phrase.length - 1).join(' ');
+                                    console.log(phrase);
+                                    searchTerm = searchTerm.replace(acronym, phrase + '[MeSH Terms]');
+                                }
+                            }
+                            if (phraseSelected) {
+                                console.log(searchTerm);
+                                window.location.href = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + searchTerm;
+                            } else {
+                                //notFound = 'No phrase selected';
+                                //document.getElementById('notFound').innerHTML = notFound.fontcolor('red');
+                                document.getElementById('notFound').innerHTML = 'No phrase selected'
+                                //alert('no items selected');
+                                //console.log('no items selected');
+                            }
+                        })
+
+                        dialog.querySelector("button[id = 'dialogClose']").addEventListener("click", function () {
+                            dialog.close();
+                        })
+                        dialog.style.position = 'absolute';
+                        dialog.style.color = '#20558a';
+                        dialog.style.top = '-70%';
+                        dialog.style.right = '-60%';
+                        dialog.style.padding = '1%';
+                        dialog.showModal();
+                    }
+                }
+            }
+
+        }
+    //searchString = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + r.phrase.toUpperCase() + '[MeSH Terms] ' + searchTerm.replace(r.term, '');
+    //<a href = "' + searchString + '">' +
+    </script>
+</body>
+</html>

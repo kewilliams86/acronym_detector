@@ -1,69 +1,110 @@
-/*
-// checkboxes
-
 function searchFunction(term, callback) {
 
-    console.log(term)
+    //console.log(term)
     var xhttp = new XMLHttpRequest();
 
     xhttp.onload = function() {
 
-        // only performing code if request succeeds
+        // only generate phrases if request succeeds
         // if valid acronym, www.path.to/json/ACRONYM will exist
-        if (this.readyState == 4 && this.status == 200) {
-            query = JSON.parse(this.responseText);
-            // list comprehension (kind of) to get iterable list of dictionaries
-            phraseList = query.map(function(element) {return element});
-            for (p of phraseList) { // add term key with value to each phrase
-                p['term'] = term;
-
+        try {
+            if (this.readyState == 4 && this.status == 200) {
+                query = JSON.parse(this.responseText);
+                // get array of objects containing acronym, phrase, count, and MeSH ID
+                let phraseList = query.map(function (element) { return element });
+                results.push(phraseList); // make multidimensional array, index for each found acronym
             }
-            //phraseList.push({key: 'term', value: term});
-            results = results.concat(phraseList);
-            //console.log(results);
+        } catch (err) { // ??? if word not acronym, not sure how to handle this as error occasionally occurred without
+            console.log(term + ' not found');
+        } finally {
+            callback(); // call generateDialogBox
         }
-        callback();
         
     }
 
-    xhttp.open("GET", 'https://my-json-server.typicode.com/kewilliams86/demo/' + term, true);
-    //xhttp.open("GET", 'http://bioinformatics.easternct.edu/BCBET2/findphrase.php?q=' + term, true);
+    //xhttp.open("GET", 'https://my-json-server.typicode.com/kewilliams86/demo/' + term, true);
+    xhttp.open("GET", 'https://bioinformatics.easternct.edu/BCBET2/findphrase.php?q=' + term, true);
     xhttp.send();
 }
 
-function finish() {
+function generateDialogBox() {
     waiting--; // wait for all pages to load
     if (waiting == 0) {
 
         //console.log(results)
         if (results.length > 0) { // if any matches found
-            dialogData = '<dialog>Potential acronym for ' + searchTerm + ':<br><br>The following phrase(s) are linked \
-            to your search:  <br>';
 
-            let i = 1;
-            for (let r of results) { // create links for all associated phrases
-                console.log(r[0]);
-                //searchString = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + r.phrase + '[MeSH Terms] ' + searchTerm.replace(r.term, '');
-                //searchString = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + r.phrase.toUpperCase() + '[MeSH Terms]';
-                //dialogData += '<li><a href = "' + searchString + '">' + r.phrase + '</a></li>';
-                
-                dialogData += '<input type="checkbox" id="term + ' + i + '" name="term' + i +'" value="' + r.phrase.toUpperCase() + '"/>';
-                dialogData += '<label for="term' + i + '">' + r.phrase.toUpperCase() + '</label>'
-                i++;
+            let optionCnt = 0; // number to increment when creating option values
+            let acronymCnt = 0; // number to increment when creating acronym ids
+
+            //begin generation of dialog box and initialize unordered list of acronyms
+            dialogData = '<dialog id = "dialogAcronymExt"> The following potential acronyms were detected: <br><ol>'
+
+            
+            for (let t of results) { // add acronym and dropbox for each associated phrase to list
+                t = t.sort(function (a, b) { // sort phrases by count - highest to lowest
+                    return b.count - a.count;
+                })
+                dialogData += '<li>' + t[0].acronym.toUpperCase() + '</li>'; // add acronym to list
+                dialogData += '<div class="modal-body"><select id="acronym' + acronymCnt + '">' // generate dropbox for each phrase
+                dialogData += '<option value="phrase' + optionCnt + '"></option > '; // blank phrase option, no name attribute
+
+                for (let r of t) { // generate option with value=phrase#, name=acronym, and text='phrase and its count'
+                    optionCnt++;
+                    dialogData += '<option value="phrase' + optionCnt + '" name="' + r.acronym + '">';
+                    dialogData += r.phrase.toUpperCase() + ' (' + r.count + ')';
+                    dialogData += '</option >';
+                }
+                dialogData += '</select>';
+                acronymCnt++;
             }
 
-            dialogData += '<br>Click phrase to improve search results<br><br><button>Close</button></dialog>';
+            console.table(results);
 
-            document.body.innerHTML += dialogData;
-            
-            var dialog = document.querySelector("dialog");
-        
-            dialog.querySelector("button").addEventListener("click", function() {
+            dialogData += '</ol>';
+            dialogData += '<label id = "notFound" style = "color: red; padding-left: 10px;"></label><br>'; // label for no selection made ??? not sure if wanted
+            dialogData += '<button id = "dialogSearch" style = "float: left;">Search</button>' // search button
+            dialogData += '<button id = "dialogClose" style = "float: right;">Close</button></dialog> '; // close button
+
+            document.body.innerHTML += dialogData; // insert dialog box into pubmed page
+
+            let dialog = document.getElementById("dialogAcronymExt"); //access newly inserted dialog box for button interactions
+
+            // code to be executed when search button is clicked
+            dialog.querySelector("button[id = 'dialogSearch']").addEventListener("click", function () {
+                var phraseSelected = false;
+                for (i = 0; i < acronymCnt; i++) { // loop through found acronyms
+                    let input = document.getElementById("acronym" + i); // retrieve each acronym by id
+                    input = input.options[input.selectedIndex]; // modify input to contain current option selected
+                    acronym = input.getAttribute('name'); // retrieve phrase selected for acronym (null if none)
+                    //console.log(acronym);
+                    // if phrase selected, change flag, retrieve phrase, remove count '(###)', and replace acronym in search string with mesh term
+                    if (acronym != null) {
+                        phraseSelected = true
+                        phrase = input.text.split(' ');
+                        phrase = phrase.slice(0, phrase.length - 1).join(' ');
+                        //console.log(phrase);
+                        searchTerm = searchTerm.replace(acronym, phrase + '[MeSH Terms]');
+                    }
+                }
+                if (phraseSelected) { // if phrase selected, reload pubmed webpage with modified search string
+                    //console.log(searchTerm);
+                    window.location.href = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + searchTerm;
+                } else {
+                    document.getElementById('notFound').innerHTML = 'No phrase selected'; // ??? what to do when no selection
+                    //alert('no items selected');
+                    //console.log('no items selected');
+                }
+            })
+            // exit dialog on close button click
+            dialog.querySelector("button[id = 'dialogClose']").addEventListener("click", function () {
                 dialog.close();
             })
-            
-            dialog.style.top = '15%';
-            dialog.style.right = '-70%';
+            // dialog style settings
+            dialog.style.position = 'absolute';
+            dialog.style.color = '#20558a';
+            dialog.style.top = '-60%';
+            dialog.style.right = '-60%';
             dialog.style.padding = '1%';
             dialog.showModal();
         }
@@ -72,216 +113,18 @@ function finish() {
 
 var results = [];
 var searchTerm = $('input[name="term"]')[0].value.toUpperCase(); // get search term
-searchTermList = searchTerm.split(' '); // split terms into list
-waiting = searchTermList.length // get number of words
+
+//searchTermList = searchTerm.split(' '); // split terms into list
+
+// remove ' " ( ) to allow detect of acronym next to these characters ??? not sure if good idea
+var searchTermList = searchTerm.replace(/[/()'"]/g, '').split(' ');
+//updateSearchTerm = searchTerm.replace(/[/()'"]/g, '');
+//searchTermList = updateSearchTerm.split(' ');
+
+var waiting = searchTermList.length // get number of words to track when all executions of searchFunction() complete
+
 //console.log(searchTermList);
 //loop through all words, find matches and execute finish 
 searchTermList.forEach(function (term) { 
-    searchFunction(term, finish)
+    searchFunction(term, generateDialogBox)
 })
-*/
-
-
-// multiple terms and retain unmmodified query
-
-function searchFunction(term, callback) {
-
-    console.log(term)
-    var xhttp = new XMLHttpRequest();
-
-    xhttp.onload = function() {
-
-        // only performing code if request succeeds
-        // if valid acronym, www.path.to/json/ACRONYM will exist
-        if (this.readyState == 4 && this.status == 200) {
-            query = JSON.parse(this.responseText);
-            // list comprehension (kind of) to get iterable list of dictionaries
-            phraseList = query.map(function(element) {return element});
-            for (p of phraseList) { // add term key with value to each phrase
-                p['term'] = term;
-
-            }
-            //phraseList.push({key: 'term', value: term});
-            results = results.concat(phraseList);
-            //console.log(results);
-        }
-        callback();
-        
-    }
-
-    xhttp.open("GET", 'https://my-json-server.typicode.com/kewilliams86/demo/' + term, true);
-    //xhttp.open("GET", 'http://bioinformatics.easternct.edu/BCBET2/findphrase.php?q=' + term, true);
-    xhttp.send();
-}
-
-function finish() {
-    waiting--; // wait for all pages to load
-    if (waiting == 0) {
-
-        //console.log(results)
-        if (results.length > 0) { // if any matches found
-            dialogData = '<dialog>Potential acronym for ' + searchTerm + ':<br><br>The following phrase(s) are linked \
-            to your search:  <br><ul>';
-
-            //console.log(results);
-            for (let r of results) { // create links for all associated phrases
-                //console.log(r);
-                //searchString = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + r.phrase + '[MeSH Terms] ' + searchTerm;
-                searchString = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + r.phrase.toUpperCase() + '[MeSH Terms] ' + searchTerm.replace(r.term, '');
-                dialogData += '<li><a href = "' + searchString + '">' + r.phrase + '</a></li>';
-                //dialogData += '<li><a href = "' + searchString + '">' + r.phrase + '</a> ' + r.meshID + '</li>'; // random testing thing
-            }
-
-            dialogData += '</ul>Click phrase to improve search results<br><br><button>Close</button></dialog>';
-
-            document.body.innerHTML += dialogData;
-            
-            var dialog = document.querySelector("dialog");
-        
-            dialog.querySelector("button").addEventListener("click", function() {
-                dialog.close();
-            })
-            
-            dialog.style.top = '15%';
-            dialog.style.right = '-70%';
-            dialog.style.padding = '1%';
-            dialog.showModal();
-        }
-    }
-}
-
-var results = [];
-var searchTerm = $('input[name="term"]')[0].value.toUpperCase(); // get search term
-searchTermList = searchTerm.split(' '); // split terms into list
-waiting = searchTermList.length // get number of words
-//console.log(searchTermList);
-//loop through all words, find matches and execute finish 
-searchTermList.forEach(function (term) { 
-    searchFunction(term, finish)
-})
-
-
-/*
-
-// Multiple Terms
-
-function searchFunction(term, callback) {
-
-    console.log(term)
-    var xhttp = new XMLHttpRequest();
-
-    xhttp.onload = function() {
-
-        // only performing code if request succeeds
-        // if valid acronym, www.path.to/json/ACRONYM will exist
-        if (this.readyState == 4 && this.status == 200) {
-            query = JSON.parse(this.responseText);
-            // list comprehension (kind of) to get iterable list of dictionaries
-            phraseList = query.map(function(element) {return element});
-            results = results.concat(phraseList);
-            //console.log(results);
-        }
-        callback();
-        
-    }
-
-    xhttp.open("GET", 'https://my-json-server.typicode.com/kewilliams86/demo/' + term, true);
-    //xhttp.open("GET", 'http://bioinformatics.easternct.edu/BCBET2/findphrase.php?q=' + term, true);
-    xhttp.send();
-}
-
-function finish() {
-    waiting--; // wait for all pages to load
-    if (waiting == 0) {
-
-        //console.log(results)
-        if (results.length > 0) { // if any matches found
-            dialogData = '<dialog>Potential acronym for ' + searchTerm + ':<br><br>The following phrase(s) are linked \
-            to your search:  <br><ul>';
-
-            for (let r of results) { // create links for all associated phrases
-                console.log(r[0]);
-                //searchString = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + r.phrase + '[MeSH Terms] ' + searchTerm;
-                searchString = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + r.phrase.toUpperCase() + '[MeSH Terms]';
-                dialogData += '<li><a href = "' + searchString + '">' + r.phrase + '</a></li>';
-                //dialogData += '<li><a href = "' + searchString + '">' + r.phrase + '</a> ' + r.meshID + '</li>'; // random testing thing
-            }
-
-            dialogData += '</ul>Click phrase to improve search results<br><br><button>Close</button></dialog>';
-
-            document.body.innerHTML += dialogData;
-            
-            var dialog = document.querySelector("dialog");
-        
-            dialog.querySelector("button").addEventListener("click", function() {
-                dialog.close();
-            })
-            
-            dialog.style.top = '15%';
-            dialog.style.right = '-70%';
-            dialog.style.padding = '1%';
-            dialog.showModal();
-        }
-    }
-}
-
-var results = [];
-var searchTerm = $('input[name="term"]')[0].value.toUpperCase(); // get search term
-searchTermList = searchTerm.split(' '); // split terms into list
-waiting = searchTermList.length // get number of words
-//console.log(searchTermList);
-//loop through all words, find matches and execute finish 
-searchTermList.forEach(function (term) { 
-    searchFunction(term, finish)
-})
-
-*/
-
-// Single Term
-
-/*
-var phraseList;
-
-function getInfo(searchTerm) {
-
-    var xhttp = new XMLHttpRequest();
-    
-    xhttp.onreadystatechange = function() {
-        // only performing code if request succeeds
-        // if valid acronym, www.path.to/json/ACRONYM will exist
-        if (this.readyState == 4 && this.status == 200) {
-            query = JSON.parse(this.responseText);
-            // list comprehension (kind of) to get iterable list of dictionaries
-            phraseList = query.map(function(element) {return element});
-
-            // collect data for dialogbox
-            dialogData = '<dialog>Potential acronym for ' + searchTerm + ':<br><br>The following phrase(s) are linked \
-                        to your search:  <br><ul>';
-            for (let p of phraseList) { // create links for all associated phrases
-                searchString = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + p.phrase + '[MeSH Terms] ';
-                dialogData += '<li><a href = "' + searchString + '">' + p.phrase + '</a></li>';
-                //dialogData += '<li><a href = "' + searchString + '">' + p.phrase + '</a> ' + p.meshID + '</li>'; // random testing thing
-            }
-            dialogData += '</ul>Click phrase to improve search results<br><br><button>Close</button></dialog>';
-
-            document.body.innerHTML += dialogData;
-            var dialog = document.querySelector("dialog");
-            dialog.querySelector("button").addEventListener("click", function() {
-                dialog.close();
-            })
-            dialog.style.top = '15%';
-            dialog.style.right = '-70%';
-            dialog.style.padding = '1%';
-            dialog.showModal();
-        }
-    }
-    xhttp.open("GET", 'https://my-json-server.typicode.com/kewilliams86/demo/' + searchTerm, true);
-    //xhttp.open("GET", 'http://bioinformatics.easternct.edu/BCBET2/findphrase.php?q=' + searchTerm, true);
-    xhttp.send();
-};
-
-
-var searchTerm = $('input[name="term"]')[0].value.toUpperCase(); // get search term
-getInfo(searchTerm);
-
-*/

@@ -10,7 +10,9 @@ associated phrases.  Link acronyms with phrases in the descriptor file.  Write t
 and the MESH ID if the phrase satisfies a set filtering threshold.
 
 usage:
-    detect_acronyms_final.py descriptorFile pubmedFilePath outputFile
+    detect_acronyms_with_supplemental.py supplementalFile descriptorFile pubmedFilesPath outputFile 
+        [threshold (default = 100))]
+
 """
 
 from os import listdir
@@ -24,19 +26,21 @@ import re
 
 
 # define dictionaries
-termDict = {}
+termDict = defaultdict(list)
 matchDict = defaultdict(set)
 phraseDict = defaultdict(list)
 phraseAcronymDict = defaultdict(set)
+phraseAcronymDictCopy = defaultdict(set)
 testSingle = defaultdict(list)
+phraseDictCopy = defaultdict(list)
 
 
-def xmlParse(inputFile):
+def xmlParse(inputFile, fileType):
     """
 
     Parameters
     ----------
-    inputFile : XML file (desc2021.xml or supp2021.xml)
+    inputFile : XML file (desc2020.xml)
     fileType : descriptor or supplemental
     
     Returns
@@ -48,12 +52,19 @@ def xmlParse(inputFile):
 
     """
     
-    print("Parsing XML file...")    
+      
     tree = ET.parse(inputFile)
     
-    recordString = "DescriptorRecord"
-    recordUIString = "DescriptorUI"
-
+    if fileType == "descriptor":
+        print("Parsing descriptor XML file...")  
+        recordString = "DescriptorRecord"
+        recordUIString = "DescriptorUI"
+        
+    elif fileType == "supplemental":
+        print("Parsing supplemental XML file...")  
+        recordString = "SupplementalRecord"
+        recordUIString = "SupplementalRecordUI"
+    
     for record in tree.iter(recordString):
         descID = record.find(recordUIString).text
         concepts = record.find("ConceptList") #terms located in conceptList branch
@@ -62,7 +73,7 @@ def xmlParse(inputFile):
             for term in termList:
                 for i in range(len(term)): #iterate through all terms, write to file
                     x = term[i].find('String').text
-                    if ',' not in x:
+                    if ',' not in x and '(' not in x:
                         termDict[x.lower()] = descID
 
 
@@ -82,10 +93,10 @@ def parseFiles (mypath):
     
     articleCount = 0 #count of files
     
+    print("Reading files...")
+    
     if not mypath.endswith('/'):
         mypath += '/'
-    
-    print("Reading files...")
     
     t0 = timeit.default_timer()
     for file in onlyfiles: #iterate through files
@@ -102,7 +113,7 @@ def parseFiles (mypath):
             t0 = timeit.default_timer()
             print(str(articleCount) + ' files read : time ' + str(time))
             
-        # if articleCount == 40:
+        # if articleCount == 100:
         #     break
 
     
@@ -200,7 +211,11 @@ def getPhraseRegex (phrase, acronym):
             beginTerm = terms[0]
                 
         backtrack = str(len(acronym) + 2) # number of words to backtrack
-
+        # '(\\bTERM(?:\w+[ -]){,BACKTRACK})
+        # find terms
+        
+        # old - captures begin term and back track amount of words after
+        # does not start at end of string, $ should force this
         phrasePattern = '(\\b' + beginTerm + '[ -](?:\w+[ -]){,' + backtrack + '}$)'
         # returns list with 1 index if found
         try: # find phrase
@@ -245,6 +260,8 @@ def reduceAcronym():
     mistakes in articles or uncommonly used variations
 
     """
+    
+
     for key in phraseAcronymDict:
         vals = []
         count = 0
@@ -312,6 +329,7 @@ def reducePhrases():
     Variations on phrases that have identical acronyms and MeSH IDs are combined with the most common variation
     being the end version
     """
+    
     keySet= {key for key in phraseDict} #set of acronyms
     print("Reducing phrases...")
     for key in keySet:
@@ -333,7 +351,7 @@ def reducePhrases():
          
 
 # sort phraseDict by count
-# retain only top 10 phrases and remove all phrases occuring fewer than 100 times
+# retain only top 10 phrases and remove all phrases occuring fewer than threshold
 def filterPhrases():
     """
     sort phraseDict by count, retain only top 10 phrases and remove all phrases occuring fewer than 100 times
@@ -373,13 +391,14 @@ def writeToPhraseFile(outFile):
         for key in phraseDict:
             for phrase in phraseDict[key]:
                 writeFile.write(key + '\t' + phrase[0] + '\t' + str(phrase[1]) + '\t' + termDict[phrase[0]] + '\n')
-
+            
 
 # main program
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser(description='Extract article information from PubMed xml files')
+ap.add_argument("supplementalFile", help = "xml file with supplemental terms")
 ap.add_argument("descriptorFile", help = "xml file with descriptor terms")
-ap.add_argument("pubmedFilePath", help = "folder path containing pubmed text")
+ap.add_argument("pubmedFilesPath", help = "folder path containing pubmed text")
 ap.add_argument("outputFile", help = "file to write data to")
 ap.add_argument("threshold", nargs='?', type = int, help = "threshold for count of phrases to be kept (default 100)", default = 100)
 
@@ -390,14 +409,16 @@ if len(sys.argv)==1:
 
 args = vars(ap.parse_args())
 
-inputFile = args['descriptorFile']
-mypath = args['pubmedFilePath']
+suppFile = args['supplementalFile']
+descFile = args['descriptorFile']
+mypath = args['pubmedFilesPath']
 outFile = args['outputFile']
 threshold = args['threshold']
 
-# execute methods
-xmlParse(inputFile)
+xmlParse(descFile, 'descriptor')
+xmlParse(suppFile, 'supplemental')
 parseFiles(mypath)
+
 reduceAcronym()
 joinSingleWordPhrase()
 reducePhrases()

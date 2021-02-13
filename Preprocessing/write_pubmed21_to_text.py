@@ -6,7 +6,7 @@ modified write_full_pubmed_to_text.py from CPP_setup GitHub repository
 
 Usage:
 
-  write_pubmed20_to_text.py [-h] inputDirectory outputDirectory
+  write_pubmed21_to_text.py [-h] inputDirectory outputDirectory
 
 Extract dcast article information from PubMed xml files
 
@@ -27,8 +27,8 @@ PubmedArticle
 
 import shutil #move file location
 import timeit
-import mysql.connector
-from mysql.connector import errorcode
+# import mysql.connector
+# from mysql.connector import errorcode
 from lxml import etree #slightly faster than xml.etree.ElementTree, also no need to unzip
 
 import sys
@@ -146,7 +146,7 @@ def createTxtFromXML(filePath):
     
     #t3 = timeit.default_timer() #end time for whole program
     #print("\nTotal time of execution: " + str(t3 - t2))
-    if errorCount is not 0 :
+    if errorCount != 0 :
         print("\nWarning:", errorCount, "files could not written. See", outputDirectory + "/ERRORS/log.txt for more information")
 
 

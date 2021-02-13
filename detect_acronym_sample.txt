@@ -1,0 +1,90 @@
+NMR	nuclear magnetic resonance	157	D009682
+ACH	acetylcholine chloride	426	D000109
+MAO	monoamine oxidase	236	D008995
+DMSO	dimexide	180	D004121
+DNA	deoxyribonucleic acid	359	D004247
+SDS	sodium dodecyl sulfate	232	D012967
+PMN	polymorphonuclear leukocytes	163	D009504
+HVA	homovanillic acid	149	D006719
+RIA	radioimmunoassays	386	D011863
+TRH	thyrotropin-releasing hormone	374	D013973
+RBC	red blood corpuscles	169	D004912
+CBF	cerebral blood flow	149	D002560
+CSF	cerebrospinal fluids	681	D002555
+HRP	horseradish peroxidase	380	D006735
+CAMP	cyclic amp	129	D000242
+HPL	human placental lactogen	103	D010928
+THC	tetrahydrocannabinol	111	D013759
+RNA	ribonucleic acid	145	D012313
+NGF	nerve growth factor	110	D020932
+GSH	glutathione	100	D005978
+HBSAG	hepatitis b surface antigens	308	D006514
+5-HT	5-hydroxytryptamine	359	D012701
+RDS	respiratory distress syndromes	123	D012128
+ACHE	acetylcholinesterase	185	D000110
+BSA	bovine serum albumin	194	D012710
+PEG	polyethylene glycols	106	D011092
+LPS	lipopolysaccharides	460	D008070
+ICP	intracranial pressures	110	D007427
+GFR	glomerular filtration rates	217	D005919
+GABA	gamma-aminobutyric acid	276	D005680
+ATP	atp	193	D000255
+PTH	parathyroid hormone	301	D010281
+ADH	antidiuretic hormone	105	D014667
+FFA	free fatty acids	300	D005230
+CNS	central nervous systems	336	D002490
+CEA	carcinoembryonic antigen	370	D002272
+LDH	lactate dehydrogenase	228	D007770
+LDL	low-density lipoproteins	291	D008077
+HGH	human growth hormone	144	D019382
+5-HTP	5-hydroxytryptophan	100	D006916
+LHRH	luteinizing hormone-releasing hormone	117	D007987
+PRL	prolactin	312	D011388
+LH-RH	luteinizing hormone-releasing hormone	238	D007987
+FSH	follitropin	356	D005640
+TSH	thyrotropin	440	D013972
+PHA	phytohemagglutinins	400	D010835
+SHR	spontaneously hypertensive rats	218	D011918
+NDV	newcastle disease virus	101	D009522
+HSV	herpes simplex viruses	259	D018139
+CPK	creatine phosphokinase	171	D003402
+PEEP	positive-pressure ventilation	114	D011175
+PGE2	prostaglandin e2	188	D015232
+PGE1	prostaglandin e1	164	D000527
+ACTH	adrenocorticotropin	167	D000324
+AML	acute myeloid leukemia	110	D015470
+MTX	methotrexate sodium	151	D008727
+SEM	scanning electron microscopy	181	D008855
+SLE	systemic lupus erythematosus	435	D008180
+5-FU	5-fluorouracil	100	D005472
+SV40	sv40 virus	266	D013539
+ASA	aspirin	105	D001241
+HCG	human chorionic gonadotropin	282	D006063
+VLDL	very-low-density lipoproteins	198	D008079
+HDL	high-density lipoproteins	240	D008075
+CMV	cytomegaloviruses	233	D003587
+ALL	acute lymphoid leukemia	160	D054198
+DES	diethylstilbestrol	118	D004054
+EBV	epstein-barr virus	340	D004854
+PGF2ALPHA	prostaglandin f2alpha	113	D015237
+IGG	immunoglobulin g	186	D007074
+ECG	electrocardiography	135	D004562
+ADP	adenosine diphosphate	102	D000244
+6-OHDA	6-hydroxydopamine	149	D016627
+PCB	polychlorobiphenyl compounds	156	D011078
+DIC	disseminated intravascular coagulation	131	D004211
+DHT	dihydrotestosterone	161	D013196
+PGI2	prostaglandin i2	141	D011464
+VIP	vasoactive intestinal polypeptide	179	D014660
+ELISA	enzyme-linked immunosorbent assays	213	D004797
+HSV-1	herpes simplex virus type 1	104	D018259
+PWM	pokeweed mitogen	125	D011043
+RAST	radioallergosorbent tests	107	D011852
+EAE	experimental autoimmune encephalomyelitis	125	D004681
+AFP	alpha-fetoproteins	229	D000509
+CML	chronic myeloid leukemia	126	D015464
+CLL	chronic lymphocytic leukemias	115	D015451
+SSPE	subacute sclerosing panencephalitis	110	D013344
+DNCB	dinitrochlorobenzene	124	D004137
+CHD	coronary heart disease	125	D003327
+SCE	sister chromatid exchanges	103	D012854
