@@ -1,0 +1,30 @@
+name: pubmed_test 
+
+on: 
+    push:
+        paths:
+            - Preprocessing/pubMedRetrieval.py
+    pull_request:
+        paths:
+            - Preprocessing/pubMedRetrieval.py
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: mstachniuk/ci-skip@v1
+      with:
+        fail-fast: true
+
+    - uses: actions/setup-python@v2
+
+    - uses: BSFishy/pip-action@v1
+      with:
+        packages: ftputil
+
+    - name: Download PubMed data 
+      run:  cd Preprocessing && python pubMedRetrieval.py updatefiles tmp_out email --max-files=2 
