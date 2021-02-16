@@ -17,6 +17,8 @@ ap = argparse.ArgumentParser(description="Retrieve PubMed XML files. Note: a fil
 ap.add_argument("pubmedDirectory", help="pubmed directory, either 'baseline' or 'updatefiles'")
 ap.add_argument("outputDirectory", help = "directory of output files")
 ap.add_argument("email", help = "e-mail requested for FTP access")
+ap.add_argument("--max-files", help = "max number of files to download")
+
 
 if len(sys.argv)== 0:
     ap.print_help(sys.stderr)
@@ -30,6 +32,7 @@ args = vars(ap.parse_args())
 pubmedDirectory = args['pubmedDirectory']
 directory = args['outputDirectory']
 email = args['email']
+max_files = int(args['max_files'])
 
 # connect to ftp and get files
 host = ftputil.FTPHost('ftp.ncbi.nlm.nih.gov', 'anonymous', email)
@@ -40,6 +43,9 @@ files = host.listdir('.')
 # keep only *.xml.gz files
 files = [f for f in files if f.endswith("xml.gz")]
 
+# look at max_files files if set
+if max_files :
+    files = files[:max_files]
 
 if not os.path.exists(directory):
         os.makedirs(directory)
