@@ -22,8 +22,8 @@ function searchFunction(term, callback) {
         
     }
 
-    //xhttp.open("GET", 'https://my-json-server.typicode.com/kewilliams86/demo/' + term, true);
-    xhttp.open("GET", 'https://bioinformatics.easternct.edu/BCBET2/findphrase.php?q=' + term, true);
+    xhttp.open("GET", 'https://my-json-server.typicode.com/kewilliams86/demo/' + term, true);
+    //xhttp.open("GET", 'https://bioinformatics.easternct.edu/BCBET2/findphrase.php?q=' + term, true);
     xhttp.send();
 }
 
@@ -34,79 +34,134 @@ function generateDialogBox() {
         //console.log(results)
         if (results.length > 0) { // if any matches found
 
-            let optionCnt = 0; // number to increment when creating option values
-            let acronymCnt = 0; // number to increment when creating acronym ids
+            dialogData = '<dialog id = "dialogAcronymExt">';
 
-            //begin generation of dialog box and initialize unordered list of acronyms
-            dialogData = '<dialog id = "dialogAcronymExt"> The following potential acronyms were detected: <br><ol>'
+            dialogData += 'The following potential acronyms were detected: <br>';
 
-            
-            for (let t of results) { // add acronym and dropbox for each associated phrase to list
-                t = t.sort(function (a, b) { // sort phrases by count - highest to lowest
+            for (let t of results) {
+                t = t.sort(function (a, b) {
                     return b.count - a.count;
                 })
-                dialogData += '<li>' + t[0].acronym.toUpperCase() + '</li>'; // add acronym to list
-                dialogData += '<div class="modal-body"><select id="acronym' + acronymCnt + '">' // generate dropbox for each phrase
-                dialogData += '<option value="phrase' + optionCnt + '"></option > '; // blank phrase option, no name attribute
 
-                for (let r of t) { // generate option with value=phrase#, name=acronym, and text='phrase and its count'
-                    optionCnt++;
-                    dialogData += '<option value="phrase' + optionCnt + '" name="' + r.acronym + '">';
-                    dialogData += r.phrase.toUpperCase() + ' (' + r.count + ')';
-                    dialogData += '</option >';
+                //console.log(results)
+                console.log(t)
+                //console.log(typeOf(t[0].acronym))
+
+                dialogData += '<button class="accordion">' + t[0].acronym + '</button>';
+                dialogData += '<div class="panel" style="display: none;">'
+
+                for (let r of t) {
+                    //console.log(r);
+
+                    dialogData += '<input type="checkbox" class = "selections" meshID = "' + r.meshID;
+                    dialogData += '" acronym="' + r.acronym + '" phrase="' + r.phrase + '"\>';
+                    dialogData += r.phrase.toUpperCase() + ' (' + r.count + ')<br>';
                 }
-                dialogData += '</select>';
-                acronymCnt++;
+                dialogData += '</div>'
             }
 
-            console.table(results);
+            //console.table(results);
 
-            dialogData += '</ol>';
-            dialogData += '<label id = "notFound" style = "color: red; padding-left: 10px;"></label><br>'; // label for no selection made ??? not sure if wanted
-            dialogData += '<button id = "dialogSearch" style = "float: left;">Search</button>' // search button
-            dialogData += '<button id = "dialogClose" style = "float: right;">Close</button></dialog> '; // close button
+            dialogData += '</ol><br>Select desired phrases:<br><br>';
+            dialogData += '<input id="containAcronyms" type="checkbox">Retain acronym in search query?<br>';
 
-            document.body.innerHTML += dialogData; // insert dialog box into pubmed page
+            dialogData += '<button id = "dialogClose" style = "float: left; background-color: #ffffff; border: 1px solid black; border-color: #20558a; color: #20558a;">Close</button>' // search button
+            dialogData += '<label id = "notFound" style = "color: red; padding-left: 10px;"></label>';
+            dialogData += '<button id = "dialogSearch" style = "float: right; background-color: #20558a;">Search</button></dialog> ';
 
-            let dialog = document.getElementById("dialogAcronymExt"); //access newly inserted dialog box for button interactions
+            document.body.innerHTML += dialogData;
 
-            // code to be executed when search button is clicked
+            /*
+            let acc = document.getElementsByName("selections");
+
+            //iterate through accordian buttons add event listener to show/unshow elements
+            for (let i = 0; i < acc.length; i++) {
+                acc[i].addEventListener("click", function () {
+                    this.classList.toggle("active");
+                    var panel = this.nextElementSibling;
+                    if (panel.style.display === "block") {
+                        panel.style.display = "none";
+                    } else {
+                        panel.style.display = "block";
+                    }
+                });
+            }
+            */
+
+            var dialog = document.getElementById("dialogAcronymExt");
+
+            let acc = dialog.querySelectorAll("[class = 'accordion']");
+
+            //iterate through accordian buttons add event listener to show/unshow elements
+            for (let i = 0; i < acc.length; i++) {
+                acc[i].addEventListener("click", function () {
+                    this.classList.toggle("active");
+                    var panel = this.nextElementSibling;
+                    if (panel.style.display === "block") {
+                        panel.style.display = "none";
+                    } else {
+                        panel.style.display = "block";
+                    }
+                });
+            }
+
             dialog.querySelector("button[id = 'dialogSearch']").addEventListener("click", function () {
                 var phraseSelected = false;
-                for (i = 0; i < acronymCnt; i++) { // loop through found acronyms
-                    let input = document.getElementById("acronym" + i); // retrieve each acronym by id
-                    input = input.options[input.selectedIndex]; // modify input to contain current option selected
-                    acronym = input.getAttribute('name'); // retrieve phrase selected for acronym (null if none)
-                    //console.log(acronym);
-                    // if phrase selected, change flag, retrieve phrase, remove count '(###)', and replace acronym in search string with mesh term
-                    if (acronym != null) {
-                        phraseSelected = true
-                        phrase = input.text.split(' ');
-                        phrase = phrase.slice(0, phrase.length - 1).join(' ');
-                        //console.log(phrase);
-                        searchTerm = searchTerm.replace(acronym, phrase + '[MeSH Terms]');
+                let checkboxes = dialog.getElementsByClassName('selections');
+                let replaceAcronym = document.querySelector("[id = 'containAcronyms']");
+
+                var newPhraseString = "";
+
+                for (let c of checkboxes) {
+                    if (c.checked == true) {
+                        phraseSelected = true;
+                        let acronym = c.getAttribute('acronym');
+                        let phrase = c.getAttribute('phrase');
+                        let meshID = c.getAttribute('meshid');
+
+
+
+                        if (meshID.startsWith('D')) {
+                            newPhraseString += ' ' + phrase + '[MeSH Terms]';
+                        } else if (meshID.startsWith('C')) {
+                            newPhraseString += ' ' + phrase + '[Supplementary Concept]';
+                        }
+
+                        if (!replaceAcronym.checked) {
+                            searchTerm = searchTerm.replace(acronym, '');
+                        }
                     }
                 }
-                if (phraseSelected) { // if phrase selected, reload pubmed webpage with modified search string
-                    //console.log(searchTerm);
-                    window.location.href = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + searchTerm;
+
+                if (phraseSelected) {
+                    console.log(searchTerm);
+                    window.location.href = 'https://pubmed.ncbi.nlm.nih.gov/?term=' + searchTerm + newPhraseString;
                 } else {
-                    document.getElementById('notFound').innerHTML = 'No phrase selected'; // ??? what to do when no selection
+                    //notFound = 'No phrase selected';
+                    //document.getElementById('notFound').innerHTML = notFound.fontcolor('red');
+                    document.getElementById('notFound').innerHTML = 'No phrase selected'
                     //alert('no items selected');
                     //console.log('no items selected');
                 }
             })
-            // exit dialog on close button click
+
+
+
             dialog.querySelector("button[id = 'dialogClose']").addEventListener("click", function () {
                 dialog.close();
             })
-            // dialog style settings
-            dialog.style.position = 'absolute';
+            /*
+            dialog.style.position = 'fixed';
+            dialog.style.backgroundColor = '#ffffff';
             dialog.style.color = '#20558a';
-            dialog.style.top = '-60%';
+            dialog.style.top = '0%';
             dialog.style.right = '-60%';
             dialog.style.padding = '1%';
+            */
             dialog.showModal();
+
+            window.localStorage.setItem('acronymDetector', 'skip');
+            
         }
     }
 }
@@ -124,7 +179,11 @@ var searchTermList = searchTerm.replace(/[/()'"]/g, '').split(' ');
 var waiting = searchTermList.length // get number of words to track when all executions of searchFunction() complete
 
 //console.log(searchTermList);
-//loop through all words, find matches and execute finish 
-searchTermList.forEach(function (term) { 
-    searchFunction(term, generateDialogBox)
-})
+//loop through all words, find matches and execute finish
+if (localStorage.getItem('acronymDetector') === null) {
+    searchTermList.forEach(function (term) {
+        searchFunction(term, generateDialogBox);
+    })
+} else {
+    window.localStorage.removeItem('acronymDetector');
+}

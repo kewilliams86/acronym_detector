@@ -9,13 +9,15 @@
         "default_title": "PubMed Acronym Enhancer"
     },
 
-    "content_scripts": [ 
-        {
-            "matches": ["https://pubmed.ncbi.nlm.nih.gov/*"],
-            "js": [
-                "jquery-3.3.1.min.js", "getPhrase.js"
-            ]
-        }
+    "content_scripts": [
+      {
+        "matches": [ "https://pubmed.ncbi.nlm.nih.gov/*" ],
+        "js": [
+          "jquery-3.3.1.min.js",
+          "getPhrase.js"
+        ],
+        "css": [ "phraseDialog.css" ]
+      }
       ],
 
     "manifest_version": 2
