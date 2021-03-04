@@ -22,8 +22,8 @@ function searchFunction(term, callback) {
         
     }
 
-    xhttp.open("GET", 'https://my-json-server.typicode.com/kewilliams86/demo/' + term, true);
-    //xhttp.open("GET", 'https://bioinformatics.easternct.edu/BCBET2/findphrase.php?q=' + term, true);
+    //xhttp.open("GET", 'https://my-json-server.typicode.com/kewilliams86/demo/' + term, true);
+    xhttp.open("GET", 'https://bioinformatics.easternct.edu/BCBET2/findphrase.php?q=' + term, true);
     xhttp.send();
 }
 
