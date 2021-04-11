@@ -13,6 +13,7 @@ parses xml files and extracts titles and abstracts and writes to files
 detect_acronyms_with_supplemental.py :
 detects acronyms matching descriptor or supplemental MeSH terms in previous files
 and writes "acronym, phrase, count, meshID" to new file 
+
 REQUIRES: supplemental and descriptor MeSH data (supp2021.xml & desc2021.xml)
 from https://www.nlm.nih.gov/databases/download/mesh.html
 
