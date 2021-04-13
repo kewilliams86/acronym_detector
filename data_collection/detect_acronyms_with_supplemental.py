@@ -5,7 +5,7 @@ Created on Wed Jan 22 12:39:12 2020
 
 @author: kewilliams
 
-Read XML file with descriptor/supplemental terms.  Read all pubmed XML files.  Extract acronyms and
+Read XML file with descriptor/supplemental terms.  Read all pubmed text files.  Extract acronyms and
 associated phrases.  Link acronyms with phrases in the descriptor file.  Write the acronym, phrase, # of occurances, 
 and the MESH ID if the phrase satisfies a set filtering threshold.
 
@@ -82,7 +82,7 @@ def parseFiles (mypath):
 
     parameters
     ----------
-    path to all pubmed XML files
+    path to all pubmed text files
     
     Iterate through all files line by line (each
     line is an article) and send line to function extracting acronyms and phrases
@@ -132,7 +132,7 @@ def findPhrases(line):
     """
 
     # acronym containing only letters, numbers, or dash
-    # and 10 words before acroynm
+    # and 7 words before acroynm
 
     pattern ='\\b((?:\w+[ -]){,7})\(([a-zA-Z0-9-]+)\)'
     search = re.findall(pattern, line) # search[0] - 7 words : search[1] - acronym
@@ -180,7 +180,7 @@ def getPhraseRegex (phrase, acronym):
     Parameters
     ----------
     phrase : String
-        10 words preceeding detected acronym
+        7 words preceeding detected acronym
     acronym : String
         detected acronym in text
 
