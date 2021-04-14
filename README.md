@@ -20,6 +20,8 @@ from https://www.nlm.nih.gov/databases/download/mesh.html
 write_data_to_db.py :
 takes data from previous text file and writes to database
 REQUIRES: mysql
+
+
 =======
 # acronym_detector ![pubmed_test](https://github.com/gdancik/acronym_detector/workflows/pubmed_test/badge.svg)
 Detect acronyms on PubMed and suggest phrases
